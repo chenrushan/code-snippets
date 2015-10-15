@@ -13,8 +13,7 @@ void string_split_demo()
     /* split string
      * vec: the place where each part is stored
      * str: string to split
-     * boost::is_any_of(): is a function return true if one of the chars in
-     *   arguments is found
+     * boost::is_any_of(): a function return true if one of the chars in arguments is found
      *   
      * By default, every two separators delimit a token
      */
