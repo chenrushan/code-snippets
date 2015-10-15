@@ -1,7 +1,10 @@
 #include <stdio.h>
 #include <vector>
 #include <string>
+#include <iostream>
+
 #include <boost/algorithm/string.hpp>
+#include <boost/format.hpp>
 
 using namespace std;
 
@@ -41,9 +44,20 @@ void string_split_demo()
     }
 }
 
+void string_format_demo()
+{
+    /* boost::format is a function like sprintf in C but more flexible
+     * 
+     * Note that the `.str()` is needed when converting format result to a string
+     */
+    string str = (boost::format("hello, %s %d") % "world" % 23).str();
+    printf("%s\n", str.c_str());
+}
+
 int main(int argc, char *argv[])
 {
     string_split_demo();
+    string_format_demo();
 
     return 0;
 }
