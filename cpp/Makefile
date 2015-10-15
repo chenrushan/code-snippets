@@ -1,8 +1,7 @@
-all: split_string
+all: split_string boost_string
 
-split_string: split_string.o
+split_string: split_string.cpp
 	g++ -o $@ $^
 
-split_string.o: split_string.cpp
-	g++ -c -o $@ $^
-
+boost_string: boost_string.cpp
+	g++ -o $@ $^
