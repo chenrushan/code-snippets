@@ -54,10 +54,20 @@ void string_format_demo()
     printf("%s\n", str.c_str());
 }
 
+void string_join_demo()
+{
+    vector<string> vec;
+    vec.push_back("hello");
+    vec.push_back("world");
+    string str = boost::algorithm::join(vec, ", ");
+    printf("%s\n", str.c_str());
+}
+
 int main(int argc, char *argv[])
 {
     string_split_demo();
     string_format_demo();
+    string_join_demo();
 
     return 0;
 }
