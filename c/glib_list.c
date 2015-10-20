@@ -4,7 +4,7 @@
 
 void print(gpointer item, gpointer user_data)
 {
-    printf("%d\n", (int)item);
+    printf("%lu\n", (unsigned long)item);
 }
 
 int main(int argc, char *argv[])
