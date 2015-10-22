@@ -5,7 +5,7 @@
 
 /* for more info, see http://jansson.readthedocs.org/en/latest/ */
 
-int main(int argc, char *argv[])
+void load_from_file_and_query()
 {
     json_t *json = NULL;
     json_error_t jerr;
@@ -15,13 +15,14 @@ int main(int argc, char *argv[])
     /* load json file */
     json = json_load_file(json_file_path, 0, &jerr);
     if (json == NULL) {
-        fprintf(stderr, "error on json file line %d: %s\n", jerr.line, jerr.text);
-        return -1;
+        fprintf(stderr, "error on json file line %d: %s\n",
+                jerr.line, jerr.text);
+        return;
     }
     if (! json_is_object(json)) {
         fprintf(stderr, "json file is not an object");
         json_decref(json);
-        return -1;
+        return;
     }
 
     /* query name */
@@ -29,7 +30,7 @@ int main(int argc, char *argv[])
     if (! json_is_string(name)) {
         fprintf(stderr, "name is not a string");
         json_decref(json);
-        return -1;
+        return;
     }
     printf("%s\n", json_string_value(name));
 
@@ -41,14 +42,83 @@ int main(int argc, char *argv[])
         if (! json_is_object(alb)) {
             fprintf(stderr, "album is not an object\n");
             json_decref(json);
-            return -1;
+            return;
         }
 
-        printf("album name: %s\n", json_string_value(json_object_get(alb, "name")));
-        printf("album year: %s\n", json_string_value(json_object_get(alb, "year")));
+        printf("album name: %s\n",
+                json_string_value(json_object_get(alb, "name")));
+        printf("album year: %s\n",
+                json_string_value(json_object_get(alb, "year")));
     }
 
     json_decref(json);
+}
+
+void load_from_string()
+{
+    json_error_t jerr;
+    const char *json = "{ \"hello\": \"world\"}";
+    json_t *jsn = json_loads(json, 0, &jerr);
+    if (jsn == NULL) {
+        fprintf(stderr, "fail to load from string\n");
+        return;
+    }
+}
+
+void create_json_and_dump()
+{
+    json_t *json = json_object();
+    if (json == NULL) {
+        fprintf(stderr, "fail to create json object\n");
+        return;
+    }
+    json_t *jay = json_string("周杰伦");
+    if (jay == NULL) {
+        fprintf(stderr, "fail to create jay\n");
+        return;
+    }
+    if (json_object_set(json, "name", jay) != 0) {
+        fprintf(stderr, "fail to set name\n");
+        return;
+    }
+
+    /* XXX: error checking are omitted below */
+    json_object_set(json, "gender", json_string("男"));
+    json_t *albums = json_array();
+    json_t *alb1 = json_object();
+    json_object_set(alb1, "name", json_string("范特西"));
+    json_object_set(alb1, "year", json_string("2001"));
+    json_array_append(albums, alb1);
+    json_t *alb2 = json_object();
+    json_object_set(alb2, "name", json_string("八度空间"));
+    json_object_set(alb2, "year", json_string("2002"));
+    json_array_append(albums, alb2);
+    json_object_set(json, "albums", albums);
+
+    /*
+     * {
+     *   "name": "周杰伦",
+     *   "albums": [
+     *     {
+     *       "name": "范特西",
+     *       "year": "2001"
+     *     },
+     *     {
+     *       "name": "八度空间",
+     *       "year": "2002"
+     *     }
+     *   ],
+     *   "gender": "男"
+     * }
+     */
+    printf("%s\n", json_dumps(json, JSON_INDENT(2)));
+}
+
+int main(int argc, char *argv[])
+{
+    load_from_file_and_query();
+    load_from_string();
+    create_json_and_dump();
     return 0;
 }
 
