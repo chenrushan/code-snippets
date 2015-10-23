@@ -63,6 +63,7 @@ void load_from_string()
         fprintf(stderr, "fail to load from string\n");
         return;
     }
+    json_decref(jsn);
 }
 
 void create_json_and_dump()
@@ -77,23 +78,26 @@ void create_json_and_dump()
         fprintf(stderr, "fail to create jay\n");
         return;
     }
-    if (json_object_set(json, "name", jay) != 0) {
+    /* NOTE that use *_new function in case you no longer need jay
+     * after this call. This will do yourself a favor when free json
+     * object, otherwise, you'll have to free all object you create */
+    if (json_object_set_new(json, "name", jay) != 0) {
         fprintf(stderr, "fail to set name\n");
         return;
     }
 
     /* XXX: error checking are omitted below */
-    json_object_set(json, "gender", json_string("男"));
+    json_object_set_new(json, "gender", json_string("男"));
     json_t *albums = json_array();
     json_t *alb1 = json_object();
-    json_object_set(alb1, "name", json_string("范特西"));
-    json_object_set(alb1, "year", json_string("2001"));
-    json_array_append(albums, alb1);
+    json_object_set_new(alb1, "name", json_string("范特西"));
+    json_object_set_new(alb1, "year", json_string("2001"));
+    json_array_append_new(albums, alb1);
     json_t *alb2 = json_object();
-    json_object_set(alb2, "name", json_string("八度空间"));
-    json_object_set(alb2, "year", json_string("2002"));
-    json_array_append(albums, alb2);
-    json_object_set(json, "albums", albums);
+    json_object_set_new(alb2, "name", json_string("八度空间"));
+    json_object_set_new(alb2, "year", json_string("2002"));
+    json_array_append_new(albums, alb2);
+    json_object_set_new(json, "albums", albums);
 
     /*
      * {
@@ -111,7 +115,10 @@ void create_json_and_dump()
      *   "gender": "男"
      * }
      */
-    printf("%s\n", json_dumps(json, JSON_INDENT(2)));
+    const char *jstr = json_dumps(json, JSON_INDENT(2));
+    printf("%s\n", jstr);
+    json_decref(json);
+    free((void *)jstr);
 }
 
 int main(int argc, char *argv[])
