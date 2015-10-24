@@ -4,4 +4,5 @@ json_usage
 time_usage
 split_string
 boost_string
+rapidjson_usage
 *.pyc
