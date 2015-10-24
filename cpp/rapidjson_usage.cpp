@@ -49,33 +49,20 @@ void create_and_pretty_format()
     Document doc(kObjectType);
     Document::AllocatorType &allocator = doc.GetAllocator();
 
-    /* create a string property */
-    Value name(kObjectType);
-    name.SetString("周杰伦", strlen("周杰伦"), allocator);
-    doc.AddMember("name", name, allocator);
-
-    /* create a string property */
-    Value gender(kObjectType);
-    gender.SetString("男", strlen("男"), allocator);
-    doc.AddMember("gender", gender, allocator);
+    doc.AddMember("name", "周杰伦", allocator);
+    doc.AddMember("gender", "男", allocator);
 
     /* create an array property */
     Value arr(kArrayType);
 
     Value alb(kObjectType);
-    Value alb_name(kObjectType), alb_year(kObjectType);
-    alb_name.SetString("范特西", strlen("范特西"), allocator);
-    alb_year.SetString("2001", strlen("2001"), allocator);
-    alb.AddMember("name", alb_name, allocator);
-    alb.AddMember("year", alb_year, allocator);
+    alb.AddMember("name", "范特西", allocator);
+    alb.AddMember("year", "2001", allocator);
     arr.PushBack(alb, allocator);
 
     Value alb2(kObjectType);
-    Value alb_name2(kObjectType), alb_year2(kObjectType);
-    alb_name2.SetString("八度空间", strlen("八度空间"), allocator);
-    alb_year2.SetString("2002", strlen("2002"), allocator);
-    alb2.AddMember("name", alb_name2, allocator);
-    alb2.AddMember("year", alb_year2, allocator);
+    alb2.AddMember("name", "八度空间", allocator);
+    alb2.AddMember("year", "2002", allocator);
     arr.PushBack(alb2, allocator);
 
     doc.AddMember("albums", arr, allocator);
