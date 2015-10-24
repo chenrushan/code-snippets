@@ -2,6 +2,10 @@
 #include <rapidjson/prettywriter.h> 
 #include <rapidjson/filereadstream.h>
 
+/* NOTE
+ * rapidjson is awkward, too bad to use, just use jansson
+ */
+
 using namespace rapidjson;
 using namespace std;
 
@@ -56,9 +60,13 @@ void create_and_pretty_format()
     Value arr(kArrayType);
 
     Value alb(kObjectType);
-    alb.AddMember("name", "范特西", allocator);
+    alb.AddMember("name", "hello", allocator);
     alb.AddMember("year", "2001", allocator);
+    /* after adding a member, you can change it like this */
+    alb["name"] = "范特西";
+    /* this will set alb to a null Value */
     arr.PushBack(alb, allocator);
+    assert(alb.IsNull());
 
     Value alb2(kObjectType);
     alb2.AddMember("name", "八度空间", allocator);
