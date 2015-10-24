@@ -24,7 +24,7 @@ flags = [
     # language that the files to be compiled are written in. This is mostly
     # relevant for c++ headers.
     # For a C project, you would set this to 'c' instead of 'c++'.
-    '-x', 'cpp',
+    '-x', 'c++',
     # This path will only work on OS X, but extra paths that don't exist are not
     # harmful
     '-isystem', '/System/Library/Frameworks/Python.framework/Headers',
