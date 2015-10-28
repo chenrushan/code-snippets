@@ -121,11 +121,43 @@ void create_json_and_dump()
     free((void *)jstr);
 }
 
+void incref_and_decref()
+{
+    json_t *obj = json_object();
+    json_t *jay = json_string("周杰伦");
+    json_object_set_new(obj, "name", jay);
+
+    json_t *albums = json_array();
+    json_t *alb1 = json_object();
+    json_object_set_new(alb1, "name", json_string("范特西"));
+    json_object_set_new(alb1, "year", json_string("2001"));
+    json_array_append_new(albums, alb1);
+    json_t *alb2 = json_object();
+    json_object_set_new(alb2, "name", json_string("八度空间"));
+    json_object_set_new(alb2, "year", json_string("2002"));
+    json_array_append_new(albums, alb2);
+    json_object_set_new(obj, "albums", albums);
+
+    json_t *tmp = json_object_get(obj, "name");
+    json_incref(tmp);
+
+    json_t *arr = json_object_get(obj, "albums");
+    json_t *ele = json_array_get(arr, 1);
+    json_incref(arr);
+    json_incref(ele);
+
+    json_decref(obj);
+    json_decref(tmp);
+    json_decref(ele);
+    json_decref(arr);
+}
+
 int main(int argc, char *argv[])
 {
     load_from_file_and_query();
     load_from_string();
     create_json_and_dump();
+    incref_and_decref();
     return 0;
 }
 
