@@ -1,4 +1,4 @@
-all: split_string boost_string rapidjson_usage
+all: split_string boost_string timing
 
 split_string: split_string.cpp
 	g++ -o $@ $^
@@ -8,3 +8,7 @@ boost_string: boost_string.cpp
 
 rapidjson_usage: rapidjson_usage.cpp
 	g++ -o $@ $^
+
+timing: timing.cpp
+	g++ -o $@ $^
+
