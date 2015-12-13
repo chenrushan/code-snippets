@@ -20,9 +20,14 @@ int main(int argc, char *argv[])
     d += boost::gregorian::months(1);
     cout << boost::gregorian::to_iso_extended_string(d) << endl;
 
-    boost::gregorian::date d2(2015, 1, 31);
+    boost::gregorian::date d2(2015, 11, 30);
     d2 += boost::gregorian::months(1);
     cout << boost::gregorian::to_iso_extended_string(d2) << endl;
+
+    while (d < d2) {
+        cout << boost::gregorian::to_iso_extended_string(d) << endl;
+        d += boost::gregorian::days(1);
+    }
 
     return 0;
 }

@@ -1,4 +1,4 @@
-all: split_string boost_string timing mmap_usage
+all: split_string boost_string timing mmap_usage date_usage
 
 split_string: split_string.cpp
 	g++ -o $@ $^
@@ -15,3 +15,5 @@ timing: timing.cpp
 mmap_usage: mmap_usage.cpp
 	g++ -o $@ $^
 
+date_usage: boost_date_arithmatic.cpp
+	g++ -o $@ $^ -lboost_date_time
