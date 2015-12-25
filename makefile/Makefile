@@ -45,6 +45,10 @@ all: $(BINS)
 
 #------------------------------------------------------------
 # $(CPPS) 展开为 lib/lib.cpp src/foo/foo.cpp src/bar/bar.cpp
+# 
+# 如果有文件不想被 include 进来，可以这样
+# EXCLUDE_CPPS = $(wildcard $(FOO_DIR)/*useless.cpp)
+# CPPS = $(filter-out $(EXCLUDE_CPPS), $(CPPS))
 #------------------------------------------------------------
 CPPS = $(wildcard $(LIB_DIR)/*.cpp) $(wildcard $(FOO_DIR)/*.cpp) $(wildcard $(BAR_DIR)/*.cpp)
 
@@ -53,7 +57,9 @@ CPPS = $(wildcard $(LIB_DIR)/*.cpp) $(wildcard $(FOO_DIR)/*.cpp) $(wildcard $(BA
 #------------------------------------------------------------
 OBJS = $(CPPS:%.cpp=$(OBJ_DIR)/%.o)
 
+#------------------------------------------------------------
 # $(DEPS) 展开为 .build/lib/lib.d .build/src/foo/foo.d .build/src/bar/bar.d
+#------------------------------------------------------------
 DEPS = $(OBJS:.o=.d)
 
 #------------------------------------------------------------
