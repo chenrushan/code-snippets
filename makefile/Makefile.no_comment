@@ -1,0 +1,35 @@
+CC = g++
+
+LIB_DIR = lib
+FOO_DIR = src/foo
+BAR_DIR = src/bar
+
+CFLAGS = -I $(LIB_DIR) -I $(BAR_DIR) -Wall
+
+OBJ_DIR = .build
+
+BIN_DIR = bin
+
+BINS = $(BIN_DIR)/foo
+all: $(BINS)
+
+CPPS = $(wildcard $(LIB_DIR)/*.cpp) $(wildcard $(FOO_DIR)/*.cpp) $(wildcard $(BAR_DIR)/*.cpp)
+
+OBJS = $(CPPS:%.cpp=$(OBJ_DIR)/%.o)
+
+DEPS = $(OBJS:.o=.d)
+
+-include $(DEPS)
+
+$(OBJ_DIR)/%.o: %.cpp
+	@mkdir -p $(@D)
+	$(CC) $(CFLAGS) -MM -MT $@ -MF $(patsubst %.o,%.d,$@) $<
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+$(BIN_DIR)/foo: $(OBJS)
+	@mkdir -p $(@D)
+	$(CC) -o $@ $^
+
+.PHONY: clean
+clean:
+	rm -rf $(BINS) $(OBJ_DIR)
