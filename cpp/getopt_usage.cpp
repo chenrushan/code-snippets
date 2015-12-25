@@ -62,11 +62,11 @@ int main (int argc,char *argv[])
 void showhelpinfo(char *s)
 {
     cout << "Usage:   " << s << " [-option] [argument]" << endl;
-    cout << "option:  " << "-h  show help information" << endl;
+    cout << "option:  " << "-h show help information" << endl;
     cout << "         " << "-u username" << endl;
-    cout << "         " << "-p  password" << endl;
-    cout << "         " << "-s  save the password: 0(save password) 1(forget password)" << endl;
-    cout << "         " << "-v  show version infomation" << endl;
+    cout << "         " << "-p password" << endl;
+    cout << "         " << "-s save the password: 0(save password) 1(forget password)" << endl;
+    cout << "         " << "-v show version infomation" << endl;
     cout << "example: " << s << " -uusername -ppassword -s1" << endl;
 }
 
