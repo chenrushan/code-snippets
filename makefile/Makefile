@@ -17,6 +17,12 @@
 #  * 所有的 .o 文件都被放到 .build 下，并且 .build 下的目录结构与 cpp 文件
 #    的目录结构是一样的
 #  * bin 文件会被放到 bin/ 文件夹下
+#
+# 以下 Makefile 最核心的是下面几块
+#  * BINS, CPPS, OBJS, DEPS 这几个变量的设置
+#  * 编译规则的设定
+# 依我的经验，你的每个包含源文件的目录都对应一组 BINS, CPPS, OBJS, DEPS 变量，
+# 这样会方便很多
 # ============================================================
 
 CC = g++
@@ -78,6 +84,11 @@ DEPS = $(OBJS:.o=.d)
 # '111'，对于这里的 case，如果只写 %.o: %.cpp 的话，为了生成 .build/lib/lib.o，
 # '%' 会被替换成 '.build/lib/lib' 而 '.build/lib/lib.cpp' 是不存在的，而如果写成
 # '$(OBJ_DIR)/%.o'，则 '%' 会被替换成 'lib/lib'，这样就对了
+# 
+# 另一种常用的基于 pattern matching 的做法是
+#  $(OBJ_DIR)/foo_test $(OBJ_DIR)/bar_test: $(OBJ_DIR)/%_test: %.cpp %_test.cpp
+# 这种写法显式指定 $(OBJ_DIR)/foo_test $(OBJ_DIR)/bar_test 这几个文件按
+# $(OBJ_DIR)/%_test: %.cpp %_test.cpp 的规则来匹配
 # ------------------------------------------------------------
 $(OBJ_DIR)/%.o: %.cpp
 	@#------------------------------------------------------------
