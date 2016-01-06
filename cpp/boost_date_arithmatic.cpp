@@ -29,6 +29,10 @@ int main(int argc, char *argv[])
         d += boost::gregorian::days(1);
     }
 
+    // get today
+    boost::gregorian::date today = boost::gregorian::day_clock::local_day();
+    cout << boost::gregorian::to_iso_extended_string(today) << endl;
+
     return 0;
 }
 
