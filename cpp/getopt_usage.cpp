@@ -55,6 +55,14 @@ int main (int argc,char *argv[])
             break;
         }
     }
+
+    if (optind < argc) {
+        cout << "extra options:" << endl;
+        for (int i = optind; i < argc; ++i) {
+            cout << "\t" << argv[i];
+        }
+    }
+
     return 0;
 }
 
