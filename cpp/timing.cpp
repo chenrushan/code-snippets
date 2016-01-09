@@ -1,5 +1,9 @@
 #include <stdio.h>
 #include <sys/time.h>
+#include <chrono>
+#include <iostream>
+
+using namespace std;
 
 typedef unsigned long long timestamp_t;
 
@@ -29,9 +33,20 @@ int main(int argc, char *argv[])
 
     // end
     timestamp_t t1 = get_timestamp();
-
     output_diff_time(t0, t1);
-    
+
+    // {{{ 微秒级的 timing
+    chrono::high_resolution_clock::time_point ct0, ct1;
+
+    ct0 = chrono::high_resolution_clock::now();
+
+    // do something
+
+    ct1 = chrono::high_resolution_clock::now();
+
+    cout << chrono::duration<double, micro>(ct1-ct0).count() << "\u00B5s\n";
+    // }}}
+
     return 0;
 }
 
