@@ -153,7 +153,7 @@ int hashtable_t::grow()
     }
     memset(newbucks, 0xFF, sizeof(*newbucks) * newbucksz);
 
-    for (off_t b = 0; b < bucksz; ++b) {
+    for (uint64_t b = 0; b < bucksz; ++b) {
         for (pos_t nd = buckets[b]; nd != -1; ) {
             node_t *pn = (node_t*)POS2PTR(nd);
             pos_t next = pn->next;
@@ -273,7 +273,7 @@ size_t hashtable_t::size() const
 
 int hashtable_t::for_all(kvfunc *kvf) const
 {
-    for (off_t i = 0; i < bucksz; ++i) {
+    for (uint64_t i = 0; i < bucksz; ++i) {
         if (buckets[i] == -1) {
             continue;
         }
