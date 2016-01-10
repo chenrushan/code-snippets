@@ -116,9 +116,21 @@ hashtable_t::hashtable_t()
       ismmap(false), nnodes(0)
 {
     hfunc = new murmur_hash_t();
+    bucksz = next_prime(HTAB_INIT_BUK_SIZE);
 }
 
 // ---------------------------------------------------------------------------
+
+hashtable_t::hashtable_t(size_t sz)
+    : buckets(NULL), bucksz(0),
+      contsz(0), content(NULL), contlen(0),
+      ismmap(false), nnodes(0)
+{
+    hfunc = new murmur_hash_t();
+    bucksz = next_prime(sz);
+}
+
+// ----------------------------------------------------------------------
 
 hashtable_t::~hashtable_t()
 {
@@ -134,7 +146,7 @@ hashtable_t::~hashtable_t()
 int hashtable_t::grow()
 {
     size_t newbucksz = next_prime(bucksz << 1);
-    fprintf(stderr, "new bucket size: %lu\n", newbucksz);
+    // fprintf(stderr, "new bucket size: %lu\n", newbucksz);
     pos_t *newbucks = (pos_t *)calloc(sizeof(*newbucks), newbucksz);
     if (newbucks == NULL) {
         return -1;
@@ -162,7 +174,6 @@ int hashtable_t::grow()
 
 int hashtable_t::init()
 {
-    bucksz = next_prime(HTAB_INIT_BUK_SIZE);
     buckets = (pos_t *)calloc(sizeof(pos_t), bucksz);
     if (buckets == NULL) {
         return -1;
@@ -195,7 +206,7 @@ int hashtable_t::insert(void *key, size_t klen, void *val, size_t vlen)
     // resize content if needed
     if (contsz < contlen + nodesz) {
         contsz = MULTILE_OF_128(nodesz + (contsz << 1));
-        fprintf(stderr, "new content size: %lu\n", contsz);
+        // fprintf(stderr, "new content size: %lu\n", contsz);
         content = (char *)realloc(content, contsz);
         if (content == NULL) {
             return -1;

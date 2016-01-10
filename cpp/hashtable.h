@@ -24,6 +24,7 @@ public:
 
 public:
     hashtable_t();
+    hashtable_t(size_t sz);
     ~hashtable_t();
 
     int init();
