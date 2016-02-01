@@ -1,5 +1,10 @@
-all: split_string boost_string timing mmap_usage date_usage getopt_usage
+BINS = split_string boost_string timing mmap_usage getopt_usage hash_profile
+all: $(BINS)
 
 %: %.cpp
-	g++ -o $@ $^
+	g++ -O2 -std=c++11 -o $@ $^
+
+.PHONY: clean
+clean:
+	rm -rf $(BINS)
 
