@@ -48,17 +48,15 @@ void cart_product(
         // iterator by pulling it out of the neighboring element in your
         // vector of iterators.
         for(Vd::iterator it = vd.begin(); ; ) {
-            // okay, I started at the left instead. sue me
+            if (it == vd.end()) {
+                // I'm the last digit, and I'm about to roll
+                return;
+            }
             ++(it->me);
             if(it->me == it->end) {
-                if(it+1 == vd.end()) {
-                    // I'm the last digit, and I'm about to roll
-                    return;
-                } else {
-                    // cascade
-                    it->me = it->begin;
-                    ++it;
-                }
+                // cascade
+                it->me = it->begin;
+                ++it;
             } else {
                 // normal
                 break;
