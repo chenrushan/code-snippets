@@ -1,4 +1,4 @@
-BINS = split_string boost_string timing mmap_usage getopt_usage hash_profile
+BINS = split_string boost_string timing mmap_usage getopt_usage hash_profile random_number
 all: $(BINS)
 
 %: %.cpp
