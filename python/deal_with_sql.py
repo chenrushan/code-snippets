@@ -18,8 +18,11 @@ if __name__ == '__main__':
         print("open cursor error!")
         sys.exit(-1)
 
-    # 执行 sql
+    # 执行查询 sql
     cursor.execute("select * from tb_related_schema")
+
+    # 执行插入 sql
+    cursor.execute("insert into tb_related_schema values('-','-')")
 
     # 每行中的列通过 row[i] 来得到
     rows = cursor.fetchall()
