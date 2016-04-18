@@ -56,7 +56,8 @@ struct BankAccountTest : testing::Test {
     void TearDown() {}
 };
 
-// TEST_F 会自动生成为 BankAccountTest 的 member function
+// 每个 TEST_F() 是相互独立的，在一个 TEST_F() 对 account 做的修改
+// 不会影响到另一个 TEST_F()
 TEST_F(BankAccountTest, BankAccountStartsEmpty)
 {
     EXPECT_EQ(0, account.balance);
@@ -86,7 +87,6 @@ struct WithdrawAccountTest : BankAccountTest, testing::WithParamInterface<Accoun
     }
 };
 
-// TEST_P 会自动生成为 BankAccountTest 的 member function
 TEST_P(WithdrawAccountTest, FinalBalance)
 {
     auto as = GetParam();
