@@ -48,6 +48,12 @@ struct BankAccount {
 
 struct BankAccountTest : testing::Test {
     BankAccount account;
+
+    // 在 ctor 之后执行
+    void SetUp() {}
+
+    // 在 dtor 之前执行
+    void TearDown() {}
 };
 
 // TEST_F 会自动生成为 BankAccountTest 的 member function
