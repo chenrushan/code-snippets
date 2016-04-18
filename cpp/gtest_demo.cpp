@@ -1,4 +1,7 @@
 // compile with -lgtest
+// 
+// http://www.ibm.com/developerworks/aix/library/au-googletestingframework.html
+// 提供一个不错的 tutorial
 #include <gtest/gtest.h>
 
 // ======================================================================
