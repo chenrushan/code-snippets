@@ -64,6 +64,9 @@ all: $(BINS)
 #------------------------------------------------------------
 CPPS = $(wildcard $(LIB_DIR)/*.cpp) $(wildcard $(FOO_DIR)/*.cpp) $(wildcard $(BAR_DIR)/*.cpp)
 
+# 一个不错的 debug 手段，会将 CPPS 包含的内容打印出来
+$(info CPPS is ${CPPS})
+
 #------------------------------------------------------------
 # $(OBJS) 展开为 .build/lib/lib.o .build/src/foo/foo.o .build/src/bar/bar.o
 #------------------------------------------------------------
