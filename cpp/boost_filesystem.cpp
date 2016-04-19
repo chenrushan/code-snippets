@@ -12,6 +12,9 @@ int main(int argc, char *argv[])
 
     // remove a file
     boost::filesystem::remove("xx");
+
+    // get file size
+    std::cout << boost::filesystem::file_size("boost_filesystem.cpp") << std::endl;
     
     return 0;
 }
