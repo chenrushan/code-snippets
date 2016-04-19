@@ -58,6 +58,7 @@ struct BankAccountTest : testing::Test {
 
 // 每个 TEST_F() 是相互独立的，在一个 TEST_F() 对 account 做的修改
 // 不会影响到另一个 TEST_F()
+// 感觉 TEST_F 应该是一个 BankAccountTest 的子类
 TEST_F(BankAccountTest, BankAccountStartsEmpty)
 {
     EXPECT_EQ(0, account.balance);
