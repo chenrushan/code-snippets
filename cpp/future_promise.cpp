@@ -84,7 +84,8 @@ void run(const string &msg, shared_ptr<promise<string>> prom)
 }
 
 // ----------------------------------------------------------------------
-// promise 和 future 是执行 async call 时进行同步用的
+// promise 和 future 是获取 async call 返回值的一个手段，相当于 return 之于
+// sync call
 // 
 // 1. A std::future object internally stores a value that will be assigned in
 //    future and it also provides a mechanism to access that value using get().
