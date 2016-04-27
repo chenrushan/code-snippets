@@ -102,7 +102,9 @@ void ThreadPool::execute(F f)
 //   3. output2 里加 10000 次实际代价是很小的，所有可以认为 multithreaded
 //      给出的实际就是 thread pool 多线程切换之类的工作消耗的时间，所以
 //      如果你需要完成的任务需要时间超过 thread pool 自身消耗时间很多，
-//      那用 thread pool 就会带来好处
+//      那用 thread pool 就会带来好处，比如你的任务处理时间达到 1s，那
+//      就放心用 threadpool 吧，哪怕用 100 个 thread，thread 的 overhead
+//      也是比较小的 (3ms)
 // ======================================================================
 
 typedef unsigned long long llu_t;
