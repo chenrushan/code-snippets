@@ -1,23 +1,4 @@
-#include <stdio.h>
-#include <stdint.h>
-#include <sys/time.h>
-#include <iostream>
-#include <random>
-#include <functional>
-#include <vector>
-#include <string>
-#include <atomic>
-#include <memory>
-#include <map>
-#include <set>
-#include <thread>
-#include <algorithm>
-#include <functional>
-#include <string.h>
-#include <fstream>
-#include <sstream>
-
-#include "timing.h"
+#include "util.h"
 
 using namespace std;
 
