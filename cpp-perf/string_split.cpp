@@ -5,6 +5,7 @@
 using namespace std;
 using string_ref = boost::string_ref;
 
+// see https://meetingcpp.com/tl_files/mcpp/2015/talks/lightningtalks/string_ref+.pdf
 class string_splitter
 {
     string_ref src_;
