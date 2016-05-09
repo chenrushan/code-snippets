@@ -1,3 +1,4 @@
+// link with -lcrypto
 #include <openssl/md5.h>
 #include <string.h>
 
