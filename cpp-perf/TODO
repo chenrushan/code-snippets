@@ -2,3 +2,6 @@
 
     1. 把一个 array 加到 hashtable 中，然后判断另一个 array 中的数是否在 hashtable 中
     2. 把一个 array 加到 std::set 中，然后判断另一个 array 中的数是否在 set 中
+    3. sort 两个 array
+
+    分别比较在不同 array 大小的情况下，３种实现的性能
