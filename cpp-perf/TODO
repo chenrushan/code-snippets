@@ -1,0 +1,4 @@
+1. 加一个程序比较一下 intersect integer array 的不同实现
+
+    1. 把一个 array 加到 hashtable 中，然后判断另一个 array 中的数是否在 hashtable 中
+    2. 把一个 array 加到 std::set 中，然后判断另一个 array 中的数是否在 set 中
