@@ -91,7 +91,7 @@ void run(const string &msg, shared_ptr<promise<string>> prom)
 //    future and it also provides a mechanism to access that value using get().
 //    But if somebody tries to access this associated value of future through
 //    get() function before it is available, then get() function will block
-//    till value is not available.
+//    till value is available.
 //
 // 2. 每个 promise object 对应一个 future object，future object 对 caller
 //    有意义，而 promise object 对 callee 有意义，callee 会在完成给定任务后
