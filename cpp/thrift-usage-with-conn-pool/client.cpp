@@ -9,14 +9,14 @@ using namespace util;
 
 int main(int argc, char *argv[])
 {
-    ThriftConnectionPool<HelloSeviceClient> conn_pool;
+    auto addr = ServerAddress{"127.0.0.1", "19999"};
+    ThriftConnectionPool<HelloSeviceClient> conn_pool(addr);
 
-    conn_pool.set_addr_pool(ServerAddress{"127.0.0.1", "19999"});
-
-    Response resp;
     Request req;
     req.msg_size = std::stoi(argv[1]);
     req.garbage = std::stoi(argv[2]);
+
+    Response resp;
     conn_pool.handle(&HelloSeviceClient::say_hello, resp, (const Request &)req);
 
     std::cout << resp.msg << " " << resp.garbage << std::endl;

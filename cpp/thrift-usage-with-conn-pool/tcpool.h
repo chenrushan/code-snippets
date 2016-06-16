@@ -17,10 +17,11 @@ struct ServerAddress {
     std::string port;
 };
 
-#define DEFAULT_CONN_SIZE_PER_SERVER 15
-#define DEFAULT_MAX_TRY_ROUNDS 2
-#define DEFAULT_CONN_TIMEOUT 100
-#define DEFAULT_RECV_TIMEOUT 3000
+struct ServerConfig {
+    size_t max_num_conns=15;
+    unsigned recv_timeout_ms=3000;
+    unsigned conn_timeout_ms=100;
+};
 
 // ----------------------------------------------------------------------
 // 对于每一次的处理请求，自动找出一个 client 处理
@@ -41,19 +42,13 @@ template<typename Client>
 class ThriftConnectionPool {
 public:
 
-    ThriftConnectionPool(size_t max_try_rounds=DEFAULT_MAX_TRY_ROUNDS);
+    ThriftConnectionPool(const ServerAddress &addr,
+                         const ServerConfig &config=ServerConfig(),
+                         size_t max_try_rounds=2);
+    ThriftConnectionPool(const std::vector<ServerAddress> &addrs,
+                         const ServerConfig &config=ServerConfig(),
+                         size_t max_try_rounds=2);
     ~ThriftConnectionPool();
-
-    void set_addr_pool(
-            const ServerAddress &addr,
-            size_t max_nconns_per_server=DEFAULT_CONN_SIZE_PER_SERVER,
-            unsigned recv_timeout_ms=DEFAULT_RECV_TIMEOUT,
-            unsigned conn_timeout_ms=DEFAULT_CONN_TIMEOUT);
-    void set_addr_pool(
-            const std::vector<ServerAddress> &addrs,
-            size_t max_nconns_per_server=DEFAULT_CONN_SIZE_PER_SERVER,
-            unsigned recv_timeout_ms=DEFAULT_RECV_TIMEOUT,
-            unsigned conn_timeout_ms=DEFAULT_CONN_TIMEOUT);
 
     template<typename ...Args_t>
     int handle(void (Client::*handle)(Args_t...), Args_t&&... args);
@@ -73,17 +68,23 @@ private:
         }
     };
 
+    // ----------------------------------------------------------------------
+
     class ConnectionQueue {
     public:
-        ConnectionQueue(size_t max_nconns, const ServerAddress *addr,
-                unsigned recv_timeout_ms=DEFAULT_RECV_TIMEOUT,
-                unsigned conn_timeout_ms=DEFAULT_CONN_TIMEOUT);
+        ConnectionQueue(const ServerAddress &addr, const ServerConfig &config);
         ~ConnectionQueue();
         void add(Connection *conn);
         Connection *pop();
 
     private:
-        const ServerAddress *addr;
+        int sem_value() { int val; sem_getvalue(&sem, &val); return val; }
+        Connection *create_new_connection() const;
+
+    private:
+        const ServerAddress addr;
+        const ServerConfig config;
+        // connectionq queue
         std::queue<Connection *> queue;
         // 由于允许多个 thread 同时访问队列，而队列的修改不能同时有多个
         // thread，因此当一个 thread 通过了 sem 的测试后，仍需要一个 mutex
@@ -91,8 +92,8 @@ private:
         std::mutex mutex;
         // sem 用于控制最多并发链接数
         sem_t sem;
-        unsigned recv_timeout_ms;
-        unsigned conn_timeout_ms;
+
+        friend class ThriftConnectionPool;
     };
 
 private:
@@ -103,9 +104,7 @@ private:
 
 private:
 
-    std::vector<ServerAddress> addrs;
     size_t max_try_rounds;
-    size_t try_rounds;
 
     // connections that are available
     // 每个 addr 对应一个 queue，conn_queues 是线程安全的，因为 conn_queues
@@ -125,11 +124,10 @@ private:
 // @addr: 服务器地址
 template<typename Client>
 ThriftConnectionPool<Client>::ConnectionQueue::ConnectionQueue(
-        size_t max_nconns, const ServerAddress *addr,
-        unsigned recv_timeout_ms, unsigned conn_timeout_ms)
-    : addr(addr), recv_timeout_ms(recv_timeout_ms), conn_timeout_ms(conn_timeout_ms)
+        const ServerAddress &addr, const ServerConfig &config)
+    : addr(addr), config(config)
 {
-    sem_init(&sem, 0, max_nconns);
+    sem_init(&sem, 0, config.max_num_conns);
 }
 
 // ----------------------------------------------------------------------
@@ -159,7 +157,45 @@ void ThriftConnectionPool<Client>::ConnectionQueue::add(
         queue.push(conn);
     }
     sem_post(&sem);
-    // print_sem_value(sem, "add");
+    DLOG(INFO) << "add sem: " << sem_value();
+}
+
+// ----------------------------------------------------------------------
+
+// ----------------------------------------------------------------------
+// TODO: 貌似不管 server 是否限制链接个数，以下连接都能成功，但是
+// 只有指定个数的链接是可以返回结果的，这个比较恶心，连是连上了，结果
+// 不能用，但是又没有一个很好的方法判断一个链接是否是有效的，同时你又
+// 没有什么办法知道 server 还有多少链接是可用的
+// 
+// 这样的结果就是你返回的链接可能是不能用的，现在只能暂时通过 timeout
+// 的方法缓解一下，因为不能用的链接是等不到结果的
+// ----------------------------------------------------------------------
+template<typename Client>
+typename ThriftConnectionPool<Client>::Connection *
+ThriftConnectionPool<Client>::ConnectionQueue::create_new_connection() const
+{
+    using TSocket = apache::thrift::transport::TSocket;
+    using TBufferedTransport = apache::thrift::transport::TBufferedTransport;
+    using TBinaryProtocol = apache::thrift::protocol::TBinaryProtocol;
+
+    std::unique_ptr<Connection> cn(new Connection());
+
+    std::unique_ptr<TSocket> sock(new TSocket(addr.ip, atoi(addr.port.c_str())));
+    if (config.conn_timeout_ms != 0) {
+        DLOG(INFO) << "set connection timeout: " << config.conn_timeout_ms;
+        sock->setConnTimeout(config.conn_timeout_ms);
+    }
+    if (config.recv_timeout_ms != 0) {
+        DLOG(INFO) << "set recv timeout: " << config.recv_timeout_ms;
+        sock->setRecvTimeout(config.recv_timeout_ms);
+    }
+    cn->socket.reset(sock.release());
+    cn->transport.reset(new TBufferedTransport(cn->socket));
+    cn->protocol.reset(new TBinaryProtocol(cn->transport));
+    cn->client = new Client(cn->protocol);
+    cn->transport->open();
+    return cn.release();
 }
 
 // ----------------------------------------------------------------------
@@ -176,11 +212,10 @@ ThriftConnectionPool<Client>::ConnectionQueue::pop()
 
     // don't block, just return and try next server
     if (sem_trywait(&sem) != 0 && errno == EAGAIN) {
-        LOG(ERROR) << "no more connections available on "
-                   << addr->ip << ":" << addr->port;
+        LOG(ERROR) << "no connection available on " << addr.ip << ":" << addr.port;
         return nullptr;
     }
-    // print_sem_value(sem, "wait");
+    DLOG(INFO) << "wait sem: " << sem_value();
 
     // try to acquire a connection
     Connection *cn = nullptr;
@@ -200,47 +235,17 @@ ThriftConnectionPool<Client>::ConnectionQueue::pop()
 
     // if no connection is found in the queue, create one
     DLOG(INFO) << "create a new connection";
-    cn = new Connection();
-
-    // ----------------------------------------------------------------------
-    // TODO: 貌似不管 server 是否限制链接个数，以下连接都能成功，但是
-    // 只有指定个数的链接是可以返回结果的，这个比较恶心，连是连上了，结果
-    // 不能用，但是又没有一个很好的方法判断一个链接是否是有效的，同时你又
-    // 没有什么办法知道 server 还有多少链接是可用的
-    // 
-    // 这样的结果就是你返回的链接可能是不能用的，现在只能暂时通过 timeout
-    // 的方法缓解一下，因为不能用的链接是等不到结果的
-    // ----------------------------------------------------------------------
     try {
-        using TSocket = apache::thrift::transport::TSocket;
-        using TBufferedTransport = apache::thrift::transport::TBufferedTransport;
-        using TBinaryProtocol = apache::thrift::protocol::TBinaryProtocol;
-
-        auto *sock = new TSocket(addr->ip, atoi(addr->port.c_str()));
-        if (conn_timeout_ms != 0) {
-            DLOG(INFO) << "set connection timeout: " << conn_timeout_ms;
-            sock->setConnTimeout(conn_timeout_ms);
-        }
-        if (recv_timeout_ms != 0) {
-            DLOG(INFO) << "set recv timeout: " << recv_timeout_ms;
-            sock->setRecvTimeout(recv_timeout_ms);
-        }
-        cn->socket.reset(sock);
-        cn->transport.reset(new TBufferedTransport(cn->socket));
-        cn->protocol.reset(new TBinaryProtocol(cn->transport));
-        cn->client = new Client(cn->protocol);
-        cn->transport->open();
-
+        cn = create_new_connection();
     } catch(std::exception &e) {
         LOG(ERROR) << "unable to create a connection to "
-                   << addr->ip << ":" << addr->port;
-        delete cn;
+                   << addr.ip << ":" << addr.port;
         sem_post(&sem); // XXX: 别忘了 increase semaphore
-        // print_sem_value(sem, "get exception");
+        DLOG(INFO) << "get exception sem: " << sem_value();
         return nullptr;
     }
 
-    DLOG(INFO) << "successfully connect to " << addr->ip << ":" << addr->port;
+    DLOG(INFO) << "successfully connect to " << addr.ip << ":" << addr.port;
     return cn;
 }
 
@@ -249,9 +254,26 @@ ThriftConnectionPool<Client>::ConnectionQueue::pop()
 // ======================================================================
 
 template<typename Client>
-ThriftConnectionPool<Client>::ThriftConnectionPool(size_t max_try_rounds)
+ThriftConnectionPool<Client>::ThriftConnectionPool(
+        const ServerAddress &addr, const ServerConfig &config,
+        size_t max_try_rounds)
     : max_try_rounds(max_try_rounds)
 {
+    conn_queues.push_back(new ConnectionQueue(addr, config));
+    srand(time(nullptr));
+}
+
+// ----------------------------------------------------------------------
+
+template<typename Client>
+ThriftConnectionPool<Client>::ThriftConnectionPool(
+        const std::vector<ServerAddress> &addrs, const ServerConfig &config,
+        size_t max_try_rounds)
+    : max_try_rounds(max_try_rounds)
+{
+    for (const auto &addr : addrs) {
+        conn_queues.push_back(new ConnectionQueue(addr, config));
+    }
     srand(time(nullptr));
 }
 
@@ -263,37 +285,6 @@ ThriftConnectionPool<Client>::~ThriftConnectionPool()
     for (unsigned i = 0; i < conn_queues.size(); ++i) {
         delete conn_queues[i];
     }
-}
-
-// ----------------------------------------------------------------------
-
-template<typename Client>
-void ThriftConnectionPool<Client>::set_addr_pool(
-        const std::vector<ServerAddress> &addrs, size_t max_nconns_per_server,
-        unsigned recv_timeout_ms, unsigned conn_timeout_ms)
-{
-    DLOG(INFO) << "max_nconns: " << max_nconns_per_server;
-    for (unsigned i = 0; i < addrs.size(); ++i) {
-        this->addrs.push_back(addrs[i]);
-    }
-    for (unsigned i = 0; i < addrs.size(); ++i) {
-        auto *q = new ConnectionQueue(max_nconns_per_server, &this->addrs[i],
-                                      recv_timeout_ms, conn_timeout_ms);
-        conn_queues.push_back(q);
-    }
-}
-
-// ----------------------------------------------------------------------
-
-template<typename Client>
-void ThriftConnectionPool<Client>::set_addr_pool(
-        const ServerAddress &addr, size_t max_nconns_per_server,
-        unsigned recv_timeout_ms, unsigned conn_timeout_ms)
-{
-    this->addrs.push_back(addr);
-    auto *q = new ConnectionQueue(max_nconns_per_server, &this->addrs[0],
-                                  recv_timeout_ms, conn_timeout_ms);
-    conn_queues.push_back(q);
 }
 
 // ----------------------------------------------------------------------
@@ -349,8 +340,8 @@ ThriftConnectionPool<Client>::get_conn()
             auto idx = (i+base) % conn_queues.size();
             auto *cn = conn_queues[idx]->pop();
             if (cn != nullptr) {
-                DLOG(INFO) << "get connection from "
-                           << addrs[idx].ip << ":" << addrs[idx].port;
+                DLOG(INFO) << "get connection from " << conn_queues[idx]->addr.ip
+                           << ":" << conn_queues[idx]->addr.port;
                 return std::pair<unsigned, Connection *>(idx, cn);
             }
         }
@@ -360,7 +351,6 @@ ThriftConnectionPool<Client>::get_conn()
             sleep(0.1 * (1 << rounds));
         }
     }
-
     return std::make_pair(-1, nullptr);
 }
 

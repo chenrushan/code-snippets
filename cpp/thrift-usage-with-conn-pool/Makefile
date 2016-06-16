@@ -4,7 +4,7 @@ CC = g++
 
 THRIFT_DIR = gen-cpp
 
-LIBS = -lthrift -lglog
+LIBS = -lthrift -lglog -lpthread
 INCS = 
 CFLAGS = $(DEBUG) $(INCS) -Wall -Wno-reorder -std=c++11
 
