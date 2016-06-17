@@ -50,8 +50,8 @@ public:
                          size_t max_try_rounds=2);
     ~ThriftConnectionPool();
 
-    template<typename ...Args_t>
-    int handle(void (Client::*handle)(Args_t...), Args_t&&... args);
+    template<typename... Argst, typename... Argst2>
+    int handle(void (Client::*handle)(Argst...), Argst2&&... args);
 
 private:
 
@@ -290,9 +290,9 @@ ThriftConnectionPool<Client>::~ThriftConnectionPool()
 // ----------------------------------------------------------------------
 
 template<typename Client>
-template<typename ...Args_t>
+template<typename... Argst, typename... Argst2>
 int ThriftConnectionPool<Client>::handle(
-        void (Client::*handle)(Args_t...), Args_t&&... args)
+        void (Client::*handle)(Argst...), Argst2&&... args)
 {
     int err = 0;
 
@@ -302,7 +302,7 @@ int ThriftConnectionPool<Client>::handle(
             continue;
         }
         try {
-            (cn.second->client->*handle)(std::forward<Args_t>(args)...);
+            (cn.second->client->*handle)(std::forward<Argst2>(args)...);
             // 如正常完成任务，则将链接归还
             conn_queues[cn.first]->add(cn.second);
             break;

@@ -17,7 +17,7 @@ int main(int argc, char *argv[])
     req.garbage = std::stoi(argv[2]);
 
     Response resp;
-    conn_pool.handle(&HelloSeviceClient::say_hello, resp, (const Request &)req);
+    conn_pool.handle(&HelloSeviceClient::say_hello, resp, req);
 
     std::cout << resp.msg << " " << resp.garbage << std::endl;
     
