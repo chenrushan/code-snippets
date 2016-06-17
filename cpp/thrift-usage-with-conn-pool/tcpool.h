@@ -1,5 +1,5 @@
-#ifndef _CHENRS_CPOOL_H_
-#define _CHENRS_CPOOL_H_
+#ifndef _THRIFT_CONNECTION_POOL_H_
+#define _THRIFT_CONNECTION_POOL_H_
 
 #include <thrift/protocol/TBinaryProtocol.h>
 #include <thrift/transport/TSocket.h>
@@ -17,7 +17,7 @@ struct ServerAddress {
     std::string port;
 };
 
-struct ServerConfig {
+struct ConnectionConfig {
     size_t max_num_conns=15;
     unsigned recv_timeout_ms=3000;
     unsigned conn_timeout_ms=100;
@@ -38,20 +38,20 @@ struct ServerConfig {
 // ----------------------------------------------------------------------
 // TODO: ip pool 是否需要定期更新，还是就 engine 启动时设置一下就不动了
 // ----------------------------------------------------------------------
-template<typename Client>
+template<typename ClientType>
 class ThriftConnectionPool {
 public:
 
     ThriftConnectionPool(const ServerAddress &addr,
-                         const ServerConfig &config=ServerConfig(),
+                         const ConnectionConfig &config=ConnectionConfig(),
                          size_t max_try_rounds=2);
     ThriftConnectionPool(const std::vector<ServerAddress> &addrs,
-                         const ServerConfig &config=ServerConfig(),
+                         const ConnectionConfig &config=ConnectionConfig(),
                          size_t max_try_rounds=2);
     ~ThriftConnectionPool();
 
     template<typename... Argst, typename... Argst2>
-    int handle(void (Client::*handle)(Argst...), Argst2&&... args);
+    int handle(void (ClientType::*handle)(Argst...), Argst2&&... args);
 
 private:
 
@@ -59,7 +59,7 @@ private:
         boost::shared_ptr<apache::thrift::transport::TTransport> socket;
         boost::shared_ptr<apache::thrift::transport::TTransport> transport;
         boost::shared_ptr<apache::thrift::protocol::TProtocol> protocol;
-        Client *client;
+        ClientType *client;
 
         ~Connection() {
             // XXX: 这个可能 throw exception
@@ -72,7 +72,7 @@ private:
 
     class ConnectionQueue {
     public:
-        ConnectionQueue(const ServerAddress &addr, const ServerConfig &config);
+        ConnectionQueue(const ServerAddress &addr, const ConnectionConfig &config);
         ~ConnectionQueue();
         void add(Connection *conn);
         Connection *pop();
@@ -83,7 +83,7 @@ private:
 
     private:
         const ServerAddress addr;
-        const ServerConfig config;
+        const ConnectionConfig config;
         // connectionq queue
         std::queue<Connection *> queue;
         // 由于允许多个 thread 同时访问队列，而队列的修改不能同时有多个
@@ -122,9 +122,9 @@ private:
 // 一个 queue 对应一个服务器
 // @max_nconns: 服务器的链接上限
 // @addr: 服务器地址
-template<typename Client>
-ThriftConnectionPool<Client>::ConnectionQueue::ConnectionQueue(
-        const ServerAddress &addr, const ServerConfig &config)
+template<typename ClientType>
+ThriftConnectionPool<ClientType>::ConnectionQueue::ConnectionQueue(
+        const ServerAddress &addr, const ConnectionConfig &config)
     : addr(addr), config(config)
 {
     sem_init(&sem, 0, config.max_num_conns);
@@ -132,8 +132,8 @@ ThriftConnectionPool<Client>::ConnectionQueue::ConnectionQueue(
 
 // ----------------------------------------------------------------------
 
-template<typename Client>
-ThriftConnectionPool<Client>::ConnectionQueue::~ConnectionQueue()
+template<typename ClientType>
+ThriftConnectionPool<ClientType>::ConnectionQueue::~ConnectionQueue()
 {
     while (queue.size()) {
         delete queue.front();
@@ -146,8 +146,8 @@ ThriftConnectionPool<Client>::ConnectionQueue::~ConnectionQueue()
 
 // 往 queue 添加一个链接
 // 如果 conn == nullptr 表示一个链接被 destroy 掉了
-template<typename Client>
-void ThriftConnectionPool<Client>::ConnectionQueue::add(
+template<typename ClientType>
+void ThriftConnectionPool<ClientType>::ConnectionQueue::add(
         ThriftConnectionPool::Connection *conn)
 {
     DLOG(INFO) << "add a " << (conn == nullptr ? "nullptr" : "normal")
@@ -171,9 +171,9 @@ void ThriftConnectionPool<Client>::ConnectionQueue::add(
 // 这样的结果就是你返回的链接可能是不能用的，现在只能暂时通过 timeout
 // 的方法缓解一下，因为不能用的链接是等不到结果的
 // ----------------------------------------------------------------------
-template<typename Client>
-typename ThriftConnectionPool<Client>::Connection *
-ThriftConnectionPool<Client>::ConnectionQueue::create_new_connection() const
+template<typename ClientType>
+typename ThriftConnectionPool<ClientType>::Connection *
+ThriftConnectionPool<ClientType>::ConnectionQueue::create_new_connection() const
 {
     using TSocket = apache::thrift::transport::TSocket;
     using TBufferedTransport = apache::thrift::transport::TBufferedTransport;
@@ -193,7 +193,7 @@ ThriftConnectionPool<Client>::ConnectionQueue::create_new_connection() const
     cn->socket.reset(sock.release());
     cn->transport.reset(new TBufferedTransport(cn->socket));
     cn->protocol.reset(new TBinaryProtocol(cn->transport));
-    cn->client = new Client(cn->protocol);
+    cn->client = new ClientType(cn->protocol);
     cn->transport->open();
     return cn.release();
 }
@@ -204,9 +204,9 @@ ThriftConnectionPool<Client>::ConnectionQueue::create_new_connection() const
 // 1. 首先判断是不是已经达到链接上限了，如果是，则返回失败
 // 2. 然后看看 queue 有没有空闲的链接，有则取出并返回
 // 3. 没有空闲链接的情况下创建一个，如果失败，则返回失败
-template<typename Client>
-typename ThriftConnectionPool<Client>::Connection *
-ThriftConnectionPool<Client>::ConnectionQueue::pop()
+template<typename ClientType>
+typename ThriftConnectionPool<ClientType>::Connection *
+ThriftConnectionPool<ClientType>::ConnectionQueue::pop()
 {
     DLOG(INFO) << "request a connection";
 
@@ -253,9 +253,9 @@ ThriftConnectionPool<Client>::ConnectionQueue::pop()
 // connection pool implementation
 // ======================================================================
 
-template<typename Client>
-ThriftConnectionPool<Client>::ThriftConnectionPool(
-        const ServerAddress &addr, const ServerConfig &config,
+template<typename ClientType>
+ThriftConnectionPool<ClientType>::ThriftConnectionPool(
+        const ServerAddress &addr, const ConnectionConfig &config,
         size_t max_try_rounds)
     : max_try_rounds(max_try_rounds)
 {
@@ -265,9 +265,9 @@ ThriftConnectionPool<Client>::ThriftConnectionPool(
 
 // ----------------------------------------------------------------------
 
-template<typename Client>
-ThriftConnectionPool<Client>::ThriftConnectionPool(
-        const std::vector<ServerAddress> &addrs, const ServerConfig &config,
+template<typename ClientType>
+ThriftConnectionPool<ClientType>::ThriftConnectionPool(
+        const std::vector<ServerAddress> &addrs, const ConnectionConfig &config,
         size_t max_try_rounds)
     : max_try_rounds(max_try_rounds)
 {
@@ -279,8 +279,8 @@ ThriftConnectionPool<Client>::ThriftConnectionPool(
 
 // ----------------------------------------------------------------------
 
-template<typename Client>
-ThriftConnectionPool<Client>::~ThriftConnectionPool()
+template<typename ClientType>
+ThriftConnectionPool<ClientType>::~ThriftConnectionPool()
 {
     for (unsigned i = 0; i < conn_queues.size(); ++i) {
         delete conn_queues[i];
@@ -289,10 +289,10 @@ ThriftConnectionPool<Client>::~ThriftConnectionPool()
 
 // ----------------------------------------------------------------------
 
-template<typename Client>
+template<typename ClientType>
 template<typename... Argst, typename... Argst2>
-int ThriftConnectionPool<Client>::handle(
-        void (Client::*handle)(Argst...), Argst2&&... args)
+int ThriftConnectionPool<ClientType>::handle(
+        void (ClientType::*handle)(Argst...), Argst2&&... args)
 {
     int err = 0;
 
@@ -323,9 +323,9 @@ int ThriftConnectionPool<Client>::handle(
 
 // 这个函数尝试遍历所有的 queue 以得到一个可用的链接，如果成功，则返回队列号
 // 及相应的链接
-template<typename Client>
-std::pair<unsigned, typename ThriftConnectionPool<Client>::Connection *>
-ThriftConnectionPool<Client>::get_conn()
+template<typename ClientType>
+std::pair<unsigned, typename ThriftConnectionPool<ClientType>::Connection *>
+ThriftConnectionPool<ClientType>::get_conn()
 {
     auto base = rand() % conn_queues.size();
     DLOG(INFO) << "poll connection from " << base << "/" << conn_queues.size();
