@@ -15,6 +15,9 @@ void wrapper2(void (*func)(Argst...), Argst&&... args)
 template<typename... Argst, typename... Argst2>
 void wrapper(void (*func)(Argst...), Argst2&&... args)
 {
+    // 可以看看 template 都被解成什么了
+    cout << __PRETTY_FUNCTION__ << endl;
+
     (*func)(std::forward<Argst2>(args)...);
 }
 
