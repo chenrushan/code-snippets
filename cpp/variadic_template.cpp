@@ -45,7 +45,7 @@ int main(int argc, char *argv[])
     // 注意到，调用 wrapper2 需要显式把 strs 转换成 (const vector<string> &)
     // 否则编译会提示错误
     wrapper(print_string_vector, strs);
-    wrapper2(print_string_vector, (const vector<string> &)strs);
+    wrapper2(print_string_vector, static_cast<const vector<string> &>(strs));
 
     wrapper(add, 1, 2, 3);
     int i = 3, j = 4, k = 5;
