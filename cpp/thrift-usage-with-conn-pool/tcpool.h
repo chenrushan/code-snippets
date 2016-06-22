@@ -44,10 +44,10 @@ public:
 
     ThriftConnectionPool(const ServerAddress &addr,
                          const ConnectionConfig &config=ConnectionConfig(),
-                         size_t max_try_rounds=2);
+                         size_t max_try_rounds=1);
     ThriftConnectionPool(const std::vector<ServerAddress> &addrs,
                          const ConnectionConfig &config=ConnectionConfig(),
-                         size_t max_try_rounds=2);
+                         size_t max_try_rounds=1);
     ~ThriftConnectionPool();
 
     template<typename... Argst, typename... Argst2>
