@@ -27,14 +27,13 @@
 //   1. exception safe
 //   2. less type 
 //        * by putting work into move_to_this() and free_resource()
-//        * by unifying copy/move assignment into single function
 //   3. faster than swap version
 // ----------------------------------------------------------------------
 class DumbArray {
 public:
     DumbArray(std::size_t size = 0)
         : size_(size), array_(size_ ? new int[size_]() : nullptr) {
-        std::cout << "normal ctor: " << this << std::endl;
+        std::cout << "normal ctor: " << this << " with size " << size_ << std::endl;
     }
 
     DumbArray(const DumbArray& that)
@@ -43,7 +42,7 @@ public:
         std::copy(that.array_, that.array_ + size_, array_);
     }
 
-    DumbArray(DumbArray&& that) : DumbArray() {
+    DumbArray(DumbArray&& that) noexcept : DumbArray() {
         std::cout << "move ctor: " << this << std::endl;
         move_to_this(that);
     }
@@ -53,13 +52,28 @@ public:
         free_resource();
     }
 
-    // 这个函数同时合并了 copy assignment 和 move assignment
-    // 之前有人说以这种方式做 move assignment 会有一次多余的 move 操作，
-    // 不过通过打印日志，发现没有这样多余的 move，所以以下面这样的方式
-    // 同时实现 copy 和 move assignment 是靠谱的，既 exception safe 又
-    // 省掉很多打字
-    DumbArray& operator=(DumbArray that) {
-        std::cout << "copy/move assignment: " << this
+    // 关于 assignment 这里多说两句，之前我把 copy 和 move assignment 合并成
+    // 一个函数，即
+    //
+    //   DumbArray& operator=(DumbArray that) {
+    //       std::cout << "copy/move assignment: " << this
+    //                 << " with that: " << &that << std::endl;
+    //       move_to_this(that);
+    //       return *this;
+    //   }
+    //   
+    // 但后来发现有 noexcept 一说，还是把他们分开比较好
+
+    DumbArray& operator=(const DumbArray &that) {
+        std::cout << "copy assignment: " << this
+                  << " with that: " << &that << std::endl;
+        DumbArray temp(that);
+        move_to_this(temp);
+        return *this;
+    }
+
+    DumbArray& operator=(DumbArray &&that) noexcept {
+        std::cout << "move assignment: " << this
                   << " with that: " << &that << std::endl;
         move_to_this(that);
         return *this;
@@ -67,7 +81,7 @@ public:
 
 private:
 
-    void move_to_this(DumbArray &that) {
+    void move_to_this(DumbArray &that) noexcept {
         if (this != &that) {
             free_resource();
         }
@@ -78,7 +92,7 @@ private:
     }
 
     // move_to_this() 和 dtor() 中同时需要处理 free resource 的功能
-    void free_resource() {
+    void free_resource() noexcept {
         delete [] array_;
     }
 
@@ -91,10 +105,23 @@ int main(int argc, char *argv[])
 {
     DumbArray arr2;
 
+    std::cout << ">>> assignment\n";
     arr2 = DumbArray(20);
 
-    // DumbArray arr(10);
-    // arr2 = arr;
+    std::cout << ">>> begin push\n";
+    std::vector<DumbArray> dbarr_vec;
+
+    std::cout << ">>> first push\n";
+    dbarr_vec.push_back(DumbArray(20));
+    std::cout << ">>> second push\n";
+    dbarr_vec.push_back(DumbArray(10));
+    std::cout << ">>> third push\n";
+    dbarr_vec.push_back(DumbArray(30));
+
+    std::cout << ">>> vector assignment\n";
+    std::vector<DumbArray> dbarr_vec2 = dbarr_vec;
+
+    std::cout << ">>> leave" << std::endl;
 
     return 0;
 }
