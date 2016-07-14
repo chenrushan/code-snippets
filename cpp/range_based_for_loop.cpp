@@ -43,6 +43,7 @@ public:
         return const_cast<T&>(const_cast<const DumbArray&>(*this).operator[](i));
     }
 
+    // non-const begin(), end()
     Iterator begin() {
         std::cout << "non-const begin" << std::endl;
         return Iterator(*this);
@@ -51,6 +52,7 @@ public:
         return Iterator(*this, size_);
     }
 
+    // const begin(), end()
     ConstIterator begin() const {
         std::cout << "const begin" << std::endl;
         return ConstIterator(*this);
