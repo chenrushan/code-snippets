@@ -20,6 +20,19 @@ private:
     boost::asio::io_service service;
     // boost::thread_group for managing lifetime of threads
     boost::thread_group threadpool;
+
+    // io_service::work is base class of all works that can posted to an
+    // instance of io_service, for example when you are working with a socket
+    // and start an asynchronous read, actually you are adding a work to the
+    // io_service. So you normally never use work directly, but there is one
+    // exception to this.
+    // The io_service::run() will run operations as long as there are
+    // asynchronous operations to perform. If, at any time, there are no
+    // asynchronous operations pending (or handlers being invoked), the run()
+    // call will return.
+    // By creating the work object (I usually do it on the heap and a shared_ptr),
+    // the io_service considers itself to always have something pending, and
+    // therefore the run() method will not return.
     boost::asio::io_service::work work;
 };
 
@@ -28,8 +41,13 @@ ThreadPool::ThreadPool(size_t nthreads)
     // assigned with ioService.post() will start executing. 
     : work(service)
 {
-    // 创建 thread，每个 thread 都做相同的事，就是运行 io_service
+    // The io_service functions run(), run_one(), poll() or poll_one() must be
+    // called for the io_service to perform asynchronous operations on behalf
+    // of a C++ program.
     // io_service::run() is a kind of "message loop", so it should block the calling thread.
+    // io_service::run() is thread-safe, when a work is posted to io_service,
+    // some (random) thread will be scheduled and get the work and start executing,
+    // and all other threads just keep pending there
     for (size_t i = 0; i < nthreads; ++i) {
         threadpool.create_thread(boost::bind(&boost::asio::io_service::run, &service));
     }
