@@ -46,7 +46,8 @@ ThreadPool::ThreadPool(size_t nthreads)
     // of a C++ program.
     // io_service::run() is a kind of "message loop", so it should block the calling thread.
     // io_service::run() is thread-safe, when a work is posted to io_service,
-    // some (random) thread will be scheduled and get the work and start executing,
+    // some (random) thread will be scheduled (I guess it depends on thread
+    // scheduling policy of the OS) and get the work and start executing,
     // and all other threads just keep pending there
     for (size_t i = 0; i < nthreads; ++i) {
         threadpool.create_thread(boost::bind(&boost::asio::io_service::run, &service));
