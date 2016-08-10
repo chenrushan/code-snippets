@@ -14,30 +14,10 @@ using message_ptr = websocketpp::config::asio_client::message_type::ptr;
 
 class WebSocketClient {
 public:
-    using callback = std::function<void(message_ptr)>;
+    using callback = std::function<void(const std::string &)>;
 
     WebSocketClient(const std::string uri, callback msg_cb)
-        : uri_(move(uri)), msg_cb_(msg_cb), is_opened_(false) {}
-
-    // 如果 connection 没有 open，则 client_.send() 自己会 throw exception，
-    // 不需要我在额外判断 is_opened 是否为 true
-    void send(const std::string &msg) {
-        client_.send(hdl_, msg, websocketpp::frame::opcode::text);
-    }
-
-    void run_connection_in_new_thread() {
-    }
-
-private:
-
-    void on_open(connection_hdl hdl) {
-        is_opened_ = true;
-    }
-
-    void on_fail(connection_hdl hdl) {
-    }
-
-    void init_client() {
+        : uri_(move(uri)), msg_cb_(msg_cb), is_opened_(false) {
         // Set logging level
         client_.set_access_channels(websocketpp::log::alevel::fail);
         client_.clear_access_channels(websocketpp::log::alevel::frame_payload);
@@ -48,6 +28,51 @@ private:
         // Register our message handler
         client_.set_fail_handler(::bind(&WebSocketClient::on_fail, this, ::_1));
         client_.set_open_handler(::bind(&WebSocketClient::on_open, this, ::_1));
+        client_.set_message_handler(
+                ::bind(&WebSocketClient::on_message, this, ::_1, ::_2));
+    }
+
+    // if connection is not open, client_.send() will throw exception，
+    // so no need to check is_opened_ before sending
+    int send(const std::string &msg) {
+        websocketpp::lib::error_code ec;
+        if (!is_opened_) {
+            return -1;
+        }
+        client_.send(hdl_, msg, websocketpp::frame::opcode::text, ec);
+        if (ec) {
+            return -1;
+        }
+        return 0;
+    }
+
+    // once connection is established, asio run loop will not return, so
+    // asio loop should be run in a non-master thread
+    void run_connection_in_new_thread() {
+        auto f = std::bind(&WebSocketClient::inifinite_connection_loop, this);
+        std::thread(f).detach();
+    }
+
+    // TODO: use condition variable
+    void wait_until_connection_open() {
+        while (!is_opened_) {
+            // TODO: hardcode 1s
+            sleep(1);
+        }
+    }
+
+    std::string id() {
+        std::ostringstream ss;
+        ss << hdl_.lock().get();
+        return ss.str();
+    }
+
+private:
+
+    void on_open(connection_hdl hdl) { is_opened_ = true; }
+    void on_fail(connection_hdl hdl) {}
+    void on_message(connection_hdl hdl, message_ptr msg) {
+        msg_cb_(msg->get_payload());
     }
 
     void connect_to_server() {
@@ -60,8 +85,6 @@ private:
         websocketpp_client::connection_ptr con;
         con = client_.get_connection(uri_, ec);
         if (ec) {
-            std::cerr << "could not create connection because: "
-                      << ec.message() << std::endl;
             return;
         }
         client_.connect(con);
@@ -89,4 +112,27 @@ private:
     std::atomic<bool> is_opened_;
 
 };
+
+void message_handler(const std::string &msg)
+{
+    std::cout << "received message" << msg << std::endl;
+}
+
+int main(int argc, char *argv[])
+{
+    std::string uri = "ws://127.0.0.1:16868";
+
+    WebSocketClient client(uri, message_handler);
+    client.run_connection_in_new_thread();
+    client.wait_until_connection_open();
+
+    std::string msg = "hello, this is dinosaur " + client.id();
+    while (true) {
+        std::cerr << "send " << msg << std::endl;
+        client.send(msg);
+        sleep(1);
+    }
+
+    return 0;
+}
 
