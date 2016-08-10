@@ -5,19 +5,19 @@
 #include <cstdlib>
 #include <atomic>
 
-using websocketpp::lib::placeholders::_1;
-using websocketpp::lib::placeholders::_2;
-using websocketpp::lib::bind;
-using websocketpp::connection_hdl;
-using websocketpp_client = websocketpp::client<websocketpp::config::asio_client>;
-using message_ptr = websocketpp::config::asio_client::message_type::ptr;
+class WebsocketClient {
+    using connection_hdl = websocketpp::connection_hdl;
+    using websocketpp_client = websocketpp::client<websocketpp::config::asio_client>;
+    using message_ptr = websocketpp::config::asio_client::message_type::ptr;
 
-class WebSocketClient {
 public:
-    using callback = std::function<void(const std::string &)>;
+    using on_message_callback = std::function<void(const std::string &)>;
 
-    WebSocketClient(const std::string uri, callback msg_cb)
+    WebsocketClient(std::string uri, on_message_callback msg_cb)
         : uri_(move(uri)), msg_cb_(msg_cb), is_opened_(false) {
+        using websocketpp::lib::placeholders::_1;
+        using websocketpp::lib::placeholders::_2;
+
         // Set logging level
         client_.set_access_channels(websocketpp::log::alevel::fail);
         client_.clear_access_channels(websocketpp::log::alevel::frame_payload);
@@ -26,10 +26,10 @@ public:
         client_.init_asio();
 
         // Register our message handler
-        client_.set_fail_handler(::bind(&WebSocketClient::on_fail, this, ::_1));
-        client_.set_open_handler(::bind(&WebSocketClient::on_open, this, ::_1));
-        client_.set_message_handler(
-                ::bind(&WebSocketClient::on_message, this, ::_1, ::_2));
+        client_.set_open_handler(websocketpp::lib::bind(
+                    &WebsocketClient::on_open, this, _1));
+        client_.set_message_handler(websocketpp::lib::bind(
+                    &WebsocketClient::on_message, this, _1, _2));
     }
 
     // if connection is not open, client_.send() will throw exception，
@@ -49,7 +49,7 @@ public:
     // once connection is established, asio run loop will not return, so
     // asio loop should be run in a non-master thread
     void run_connection_in_new_thread() {
-        auto f = std::bind(&WebSocketClient::inifinite_connection_loop, this);
+        auto f = std::bind(&WebsocketClient::inifinite_connection_loop, this);
         std::thread(f).detach();
     }
 
@@ -69,8 +69,10 @@ public:
 
 private:
 
-    void on_open(connection_hdl hdl) { is_opened_ = true; }
-    void on_fail(connection_hdl hdl) {}
+    void on_open(connection_hdl hdl) {
+        is_opened_ = true;
+        hdl_ = hdl;
+    }
     void on_message(connection_hdl hdl, message_ptr msg) {
         msg_cb_(msg->get_payload());
     }
@@ -107,7 +109,7 @@ private:
 
     std::string uri_;
     websocketpp_client client_;
-    callback msg_cb_;
+    on_message_callback msg_cb_;
     connection_hdl hdl_;
     std::atomic<bool> is_opened_;
 
@@ -122,7 +124,7 @@ int main(int argc, char *argv[])
 {
     std::string uri = "ws://127.0.0.1:16868";
 
-    WebSocketClient client(uri, message_handler);
+    WebsocketClient client(uri, message_handler);
     client.run_connection_in_new_thread();
     client.wait_until_connection_open();
 
