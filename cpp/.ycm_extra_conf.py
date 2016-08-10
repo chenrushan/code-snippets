@@ -35,6 +35,7 @@ flags = [
     '-isystem', '/usr/include/raptor2',
     '-isystem', '/usr/lib/glib-2.0/include',
     '-isystem', '/usr/include/glib-2.0',
+    '-isystem', '/home/crs/sandbox/websocketpp/',
     '-I', 'include',
     '-I.'
 ]
