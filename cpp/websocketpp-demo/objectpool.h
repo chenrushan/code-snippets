@@ -6,6 +6,7 @@
 #include <vector>
 #include <queue>
 #include <atomic>
+#include <functional>
 
 // 只允许有一个 writer 的 object pool
 // T: type of object stored in pool
@@ -20,6 +21,8 @@ class OneWriterMultiReaderObjectPool {
             std::atomic<bool> is_deleted;
         };
 
+        ObjectArray() : last_slot(0), next(nullptr) {}
+
         const static size_t arrsz = 1024;
         // 用于存放 object 的数组
         std::array<Slot, arrsz> slots;
@@ -27,7 +30,7 @@ class OneWriterMultiReaderObjectPool {
         std::atomic<int> last_slot;
         // 当 last_slot == arrsz 时，会分配一个新的 ObjectArray,
         // ObjectArray 间构成一个 list
-        std::atomic<ObjectArray*> next = nullptr;
+        std::atomic<ObjectArray*> next;
     };
 
     using ObjectSlotType = typename ObjectArray::Slot;
@@ -42,9 +45,9 @@ class OneWriterMultiReaderObjectPool {
 
     // ----------------------------------------------------------------------
 
-    template<typename ObjectArrayType, typename ObjectType>
+    template<typename ObjectArrayType, typename ObjectSlotType>
     class IteratorImpl {
-        using itertype = IteratorImpl<ObjectArrayType, ObjectType>;
+        using itertype = IteratorImpl<ObjectArrayType, ObjectSlotType>;
     public:
         IteratorImpl(ObjectArrayType *array, int current_slot) :
             array_(array), current_slot_(current_slot) {}
@@ -56,14 +59,15 @@ class OneWriterMultiReaderObjectPool {
             } else {
                 current_slot_ += 1;
             }
+            return *this;
         }
 
         bool operator!=(const itertype &that) const {
             return array_ != that.array_ || current_slot_ != that.current_slot_;
         }
 
-        ObjectType &operator*() const {
-            return array_->slots[current_slot_].obj;
+        ObjectSlotType &operator*() const {
+            return array_->slots[current_slot_];
         }
 
     private:
@@ -73,8 +77,8 @@ class OneWriterMultiReaderObjectPool {
 
 public:
 
-    using Iterator = IteratorImpl<ObjectArray, T>;
-    using ConstIterator = IteratorImpl<const ObjectArray, const T>;
+    using Iterator = IteratorImpl<ObjectArray, ObjectSlotType>;
+    using ConstIterator = IteratorImpl<const ObjectArray, const ObjectSlotType>;
 
     OneWriterMultiReaderObjectPool() {
         objarr_list = new ObjectArray;
@@ -88,6 +92,7 @@ public:
         }
     }
 
+    // TODO: 未考虑是否重复
     void add(T obj) {
         bool need_to_update_last_slot = false;
         // add object to a free slot
@@ -98,7 +103,7 @@ public:
 
         // after the following two steps, readers can found the
         // newly-inserted object
-        slot->is_delete = false;
+        slot->is_deleted = false;
         if (need_to_update_last_slot) {
             current_objarr->last_slot += 1;
         }
@@ -112,20 +117,36 @@ public:
         }
         auto *slot = *it;
         // now slot can no longer be found by readers
-        slot->is_delete = true;
+        slot->is_deleted = true;
+        free_objects.push(slot);
     }
 
-    Iterator begin() { return Iterator(objarr_list, 0); }
-    Iterator end() { return Iterator(nullptr, 0); }
-    ConstIterator begin() const { return ConstIterator(objarr_list, 0); }
-    ConstIterator end() const { return ConstIterator(nullptr, 0); }
+    int for_each(std::function<int(const T&)> cb) const {
+        for (const auto &slot : *this) {
+            if (slot.is_deleted) {
+                continue;
+            }
+            auto err = cb(slot.obj);
+            if (err != 0) {
+                return err;
+            }
+        }
+        return 0;
+    }
 
 private:
+
+    ConstIterator begin() const { return ConstIterator(objarr_list, 0); }
+    ConstIterator end() const {
+        return ConstIterator(current_objarr, current_objarr->last_slot);
+    }
 
     ObjectSlotType *get_a_free_slot(bool &_need_to_update_last_slot) {
         _need_to_update_last_slot = false;
         if (free_objects.size() != 0) {
-            return free_objects.pop();
+            auto *slot = free_objects.front();
+            free_objects.pop();
+            return slot;
         }
         if (current_objarr->last_slot >= ObjectArray::arrsz) {
             current_objarr->next = new ObjectArray;
