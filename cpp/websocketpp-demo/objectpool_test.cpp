@@ -48,6 +48,20 @@ int main(int argc, char *argv[])
         string_pool.add(ss.str());
         std::this_thread::sleep_for(std::chrono::milliseconds(13));
     }
+    for (auto i = 0; i < 2000; ++i) {
+        if (i % 3 == 0) {
+            continue;
+        }
+        std::ostringstream ss;
+        ss << "ninja " << i;
+        string_pool.remove(ss.str());
+    }
+    for (auto i = 2000; i < 2500; ++i) {
+        std::ostringstream ss;
+        ss << "ninja " << i;
+        string_pool.add(ss.str());
+        std::this_thread::sleep_for(std::chrono::milliseconds(13));
+    }
     std::cerr << "major thread out" << std::endl;
     std::this_thread::sleep_for(std::chrono::seconds(2));
 
