@@ -9,7 +9,9 @@ class WebsocketServer {
     using message_ptr = websocket_server::message_ptr;
 
 public:
-    using on_message_callback = std::function<void(const std::string &msg)>;
+    // 需要知道 message 是来自那个 client 的
+    using on_message_callback =
+        std::function<void(connection_hdl, const std::string &msg)>;
 
     WebsocketServer(int port, on_message_callback msg_cb) 
         : port_(port), msg_cb_(msg_cb) {
@@ -36,16 +38,14 @@ public:
         server_.run();
     }
 
-    void send(const std::string &msg) {
-        server_.send(hdl_, msg, websocketpp::frame::opcode::text);
+    void send(connection_hdl hdl, const std::string &msg) {
+        server_.send(hdl, msg, websocketpp::frame::opcode::text);
     }
 
 private:
 
-    void on_open(connection_hdl hdl) { hdl_ = hdl; }
-
     void on_message(connection_hdl hdl, message_ptr msg) {
-        msg_cb_(msg->get_payload());
+        msg_cb_(hdl, msg->get_payload());
     }
 
 private:
@@ -56,7 +56,7 @@ private:
     connection_hdl hdl_;
 };
 
-void on_message(const std::string &msg)
+void on_message(websocketpp::connection_hdl hdl, const std::string &msg)
 {
     std::cout << "received " << msg << std::endl;
 }
