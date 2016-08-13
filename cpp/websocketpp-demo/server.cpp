@@ -5,7 +5,7 @@
 
 // ======================================================================
 // 这个程序实现了一个这样的 websocket server 框架
-// 1. server 端接受请求 --> 出发 on_message 调用 --> on_message 将 message
+// 1. server 端接受请求 --> 触发 on_message 调用 --> on_message 将 message
 //    加入一个 message pool
 // 2. 另外有一个独立的 thread，不断从 message pool 中取 message 并不断分给
 //    worker thread 打印
