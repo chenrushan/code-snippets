@@ -9,23 +9,6 @@ int main(int argc, char *argv[])
 {
     OneWriterMultiReaderObjectPool<std::string> string_pool;
 
-    // string_pool.add("hello");
-    // string_pool.add("world");
-    // string_pool.add("foo");
-    // string_pool.add("bar");
-
-    // string_pool.remove("world");
-    // string_pool.remove("xxx");
-    // string_pool.remove("hello");
-    // string_pool.remove("foo");
-
-    // string_pool.add("zee");
-    // string_pool.remove("zee");
-    // string_pool.add("kar");
-    // string_pool.remove("kar");
-    // string_pool.add("wee");
-    // string_pool.add("shi");
-
     auto print_string = [](const std::string &str) {
         std::cout << str << std::endl;
         return 0;

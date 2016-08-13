@@ -18,7 +18,7 @@ template<typename T>
 class OneWriterMultiReaderObjectPool {
     struct ObjectArray {
         struct Slot {
-            Slot(T obj) : obj(move(obj)), is_deleted(true) {}
+            Slot(T obj) : obj(std::move(obj)), is_deleted(true) {}
             Slot() : is_deleted(true) {}
             T obj;
             std::atomic<bool> is_deleted;
@@ -109,7 +109,7 @@ public:
 
     void add(T obj) {
         bool need_to_update_last_slot = false;
-        ObjectSlotType s(move(obj));
+        ObjectSlotType s(std::move(obj));
         auto it = object_index_.find(&s);
         if (it != object_index_.end()) {
             return;
@@ -117,7 +117,7 @@ public:
 
         // add object to a free slot
         auto *slot = get_a_free_slot(need_to_update_last_slot);
-        slot->obj = move(s.obj);
+        slot->obj = std::move(s.obj);
         // update index
         object_index_.insert(slot);
 

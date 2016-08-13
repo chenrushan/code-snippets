@@ -129,7 +129,11 @@ int main(int argc, char *argv[])
     client.wait_until_connection_open();
 
     std::string msg = "hello, this is dinosaur " + client.id();
+    auto i = 0;
     while (true) {
+        std::ostringstream ss;
+        ss << "hello, this is dinosaur " << client.id() << " " << i++;
+        auto msg = ss.str();
         std::cerr << "send " << msg << std::endl;
         client.send(msg);
         sleep(1);
