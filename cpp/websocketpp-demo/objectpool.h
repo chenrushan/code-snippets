@@ -11,6 +11,10 @@
 
 #include <iostream>
 
+// TODO: 逻辑上这个类是允许一个 writer 多个 reader 的，但是由于在
+// begin() 有个 lock 操作，所以如果有多个 reader 性能是成问题的，
+// 后续争取能把这个 lock 去掉
+//
 // 只允许有一个 writer 的 object pool
 // T: type of object stored in pool
 // T 需要定义 operator<
