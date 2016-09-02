@@ -60,6 +60,8 @@ private:
 
 void foo()
 {
+    namespace pt = boost::posix_time;
+    std::cout << pt::to_iso_string(pt::second_clock::local_time()) << std::endl;
     std::cout << "hello world!" << std::endl;
 }
 
