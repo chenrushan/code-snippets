@@ -18,7 +18,7 @@ public:
 
     using cb_func_t = std::function<void()>;
     RunEverydayTimer(io_service_t *io_service, cb_func_t func)
-        : io_service_(io_service), timer_(*io_service), cb_func_(func) {
+        : timer_(*io_service), cb_func_(func) {
         timer_.expires_at(get_today_utc_time_at(hms_));
         timer_.async_wait(std::bind(&RunEverydayTimer::on_time_out,
                                     this, std::placeholders::_1));
@@ -51,7 +51,6 @@ private:
     }
 
 private:
-    boost::asio::io_service *io_service_ = nullptr;
     boost::asio::deadline_timer timer_;
     ptime_t expirationtime_;
     cb_func_t cb_func_;
