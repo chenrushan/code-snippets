@@ -20,13 +20,15 @@ public:
 
 class HelloFactory : public HelloSeviceIfFactory {
 public:
+    HelloFactory() : service_(new HelloEngine()) {}
     HelloSeviceIf *getHandler(const apache::thrift::TConnectionInfo &conn) {
-        return (HelloSeviceIf *)(new HelloEngine());
+        return service_.get();
     }
 
-    void releaseHandler(HelloSeviceIf *eg) {
-        delete eg;
-    }
+    void releaseHandler(HelloSeviceIf *eg) {}
+
+private:
+    std::unique_ptr<HelloSeviceIf> service_;
 };
 
 int main(int argc, char *argv[])
