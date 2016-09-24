@@ -7,6 +7,9 @@ using Json = nlohmann::json;
 
 int main(int argc, char *argv[])
 {
+    // ======================================================================
+    // read json
+
     // load from file
     std::cout << "[load from file]" << std::endl;
     std::ifstream ifs("data/example.json");
@@ -57,8 +60,8 @@ int main(int argc, char *argv[])
     std::cout << "=================================" << std::endl;
 
     // ======================================================================
-    
     // create json
+
     Json jsn3;
     jsn3["foo"] = 1;
     jsn3["bar"] = { 1, 2, 3 };
@@ -66,6 +69,17 @@ int main(int argc, char *argv[])
     jsn3["zee"].push_back("haha");
     jsn3["zee"].push_back("xixi");
     std::cout << jsn3.dump(2) << std::endl;
+    std::cout << "=================================" << std::endl;
+
+    // ======================================================================
+    // error handling
+
+    try {
+        auto jsn = Json::parse("{");
+    } catch(...) {
+        std::cerr << "fail to parse json string" << std::endl;
+    }
+    std::cout << "=================================" << std::endl;
     
     return 0;
 }
