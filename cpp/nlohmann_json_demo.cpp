@@ -80,6 +80,11 @@ int main(int argc, char *argv[])
         std::cerr << "fail to parse json string" << std::endl;
     }
     std::cout << "=================================" << std::endl;
+
+    // ======================================================================
+
+    Json jsn4;
+    std::cout << jsn4.is_null() << std::endl;
     
     return 0;
 }
