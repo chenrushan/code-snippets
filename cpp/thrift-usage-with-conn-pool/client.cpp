@@ -9,6 +9,10 @@ using namespace util;
 
 int main(int argc, char *argv[])
 {
+    if (argc == 1) {
+        std::cout << "[USAGE]: cmd <size1> <size2>" << std::endl;
+        std::exit(0);
+    }
     auto addr = ServerAddress{"127.0.0.1", "19999"};
     ThriftConnectionPool<HelloSeviceClient> conn_pool(addr);
 
