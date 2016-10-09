@@ -5,9 +5,11 @@
 
 class ProgramOption {
 public:
+    // {{{ XXX: customize
     std::string str;
     int i;
     std::vector<std::string> vec;
+    // }}}
 
     std::string to_string() {
         // {{{ XXX: customize
