@@ -10,6 +10,7 @@ public:
     std::vector<std::string> vec;
 
     std::string to_string() {
+        // {{{ XXX: customize
         std::ostringstream os;
         os << "==================================================\n"
            << "string option: " << str << "\n"
@@ -20,6 +21,7 @@ public:
         }
         os << "\n";
         os << "==================================================\n";
+        // }}}
         return os.str();
     }
 
@@ -34,6 +36,7 @@ private:
     boost::program_options::variables_map to_vm(int argc, char **argv) {
         using namespace boost::program_options;
 
+        // {{{ XXX: customize
         options_description desc("example [options]");
         auto op_decl = desc.add_options();
         op_decl("help,h", "produce help message");
@@ -41,6 +44,7 @@ private:
         op_decl("int,i", value<int>()->required(), "integer option");
         op_decl("vec,v", value<std::vector<std::string>>(),
                 "vector option, -v foo -v bar");
+        // }}}
 
         variables_map vm;
         try {
@@ -63,6 +67,7 @@ private:
     void to_options(boost::program_options::variables_map vm) {
         using namespace boost::program_options;
 
+        // {{{ XXX: customize
         if (vm.count("str") == 0) {
             std::cout << "no str option specified" << std::endl;
         } else {
@@ -74,6 +79,7 @@ private:
             vec = vm["vec"].as<std::vector<std::string>>();
         }
         i = vm["int"].as<int>();
+        // }}}
     }
 };
 
