@@ -1,7 +1,7 @@
 // ============================================================
 // File Name :
 // Creation Date : 2016-10-26
-// Last Modified : Wed 26 Oct 2016 04:16:32 PM CST
+// Last Modified : Wed 26 Oct 2016 05:54:24 PM CST
 // Created By : ChenRushan
 // Compile with: g++ -std=c++11 ...
 // ============================================================
@@ -25,12 +25,16 @@ int main(int argc, char *argv[]) {
     // }}}
 
     // {{{ 在数组上使用 lower_bound
-    int arr[50];
-    for (auto i = 0u; i < 50; ++i) {
+    // XXX: 要非常注意它的返回值，对于下面的调用
+    //    std::lower_bound(arr, arr + 10, 10)
+    // 返回值是 arr + 10，这是表示 lower_bound 没有找到你想要的元素，就像
+    // 如果你用 vector，则返回的是 vector.end()
+    int arr[10];
+    for (auto i = 0u; i < 10; ++i) {
         arr[i] = i;
     }
-    int *p = arr + 1, *q = arr + 10;
-    auto it2 = std::lower_bound(p, q, 10, [](int i, int j) { return i < j; });
+    auto it2 =
+        std::lower_bound(arr, arr + 10, 8, [](int i, int j) { return i < j; });
     std::cout << *it2 << std::endl;
     // }}}
 
