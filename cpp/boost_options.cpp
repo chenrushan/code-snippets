@@ -5,10 +5,11 @@
 
 class ProgramOption {
 public:
-    // {{{ XXX: customize
+    // {{{ XXX: customize. option values
     std::string str;
     int i;
     std::vector<std::string> vec;
+    bool flag;
     // }}}
 
     std::string to_string() {
@@ -17,6 +18,7 @@ public:
         os << "==================================================\n"
            << "string option: " << str << "\n"
            << "integer option: " << i << "\n"
+           << "bool option: " << flag << "\n"
            << "vector option:";
         for (const auto &s : vec) {
             os << " || " << s;
@@ -30,7 +32,6 @@ public:
     static ProgramOption parse_args(int argc, char **argv) {
         ProgramOption opt;
         auto vm = opt.to_vm(argc, argv);
-        opt.to_options(vm);
         return opt;
     }
 
@@ -42,10 +43,14 @@ private:
         options_description desc("example [options]");
         auto op_decl = desc.add_options();
         op_decl("help,h", "produce help message");
-        op_decl("str,s", value<std::string>(), "string option");
-        op_decl("int,i", value<int>()->required(), "integer option");
-        op_decl("vec,v", value<std::vector<std::string>>(),
+        op_decl("str,s",
+                value<std::string>(&str)->default_value("default string"),
+                "string option");
+        op_decl("int,i", value<int>(&i)->required(), "integer option");
+        op_decl("vec,v", value<std::vector<std::string>>(&vec),
                 "vector option, -v foo -v bar");
+        op_decl("flag,f", bool_switch(&flag)->default_value(false),
+                "bool value");
         // }}}
 
         variables_map vm;
@@ -64,24 +69,6 @@ private:
             std::exit(1);
         }
         return vm;
-    }
-
-    void to_options(boost::program_options::variables_map vm) {
-        using namespace boost::program_options;
-
-        // {{{ XXX: customize
-        if (vm.count("str") == 0) {
-            std::cout << "no str option specified" << std::endl;
-        } else {
-            str = vm["str"].as<std::string>();
-        }
-        if (vm.count("vec") == 0) {
-            std::cout << "no vec option specified" << std::endl;
-        } else {
-            vec = vm["vec"].as<std::vector<std::string>>();
-        }
-        i = vm["int"].as<int>();
-        // }}}
     }
 };
 
