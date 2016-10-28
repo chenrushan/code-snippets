@@ -1,5 +1,5 @@
 // ------------------------------------------------------------
-// see <http://www.boost.org/doc/libs/1_59_0/doc/html/date_time/gregorian.html#date_time.gregorian.date_class>
+// compile with g++ -o -lboost_system -lboost_date_time
 // for more info
 // ------------------------------------------------------------
 
@@ -8,8 +8,7 @@
 
 using namespace std;
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
     boost::gregorian::date d(2015, 10, 11);
 
     cout << boost::gregorian::to_iso_extended_string(d) << endl;
@@ -35,4 +34,3 @@ int main(int argc, char *argv[])
 
     return 0;
 }
-
