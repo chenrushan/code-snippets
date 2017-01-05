@@ -10,6 +10,8 @@ if __name__ == '__main__':
                         default=None, required=True, help='type of service deployment')
     parser.add_argument('--test', action='store_true', default=False,
                         help='Test the code against a local mkcloud installation')
+    # 多值的选项，用法 -i foo bar
+    parser.add_argument('-i', '--ids', nargs = '*', help = 'some ids')
     args = parser.parse_args()
 
     print args.service
