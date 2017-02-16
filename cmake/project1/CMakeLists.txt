@@ -19,6 +19,23 @@ set(CMAKE_CXX_FLAGS_RELEASE "-O2 -std=c++11")
 # option 很容易理解了，取值 ON 和 OFF
 option(ENABLE_Test "enable unit test" ON)
 
+# ======================================================================
+# building executables
+# ======================================================================
+
+# ------------------------------------------------------------
+# 关于 library 的使用，这里多说两句，你也可以不用 find_package 的，
+# 有时候比如你的库没有对应的 find 脚本，那也可以直接调用
+# include_directories(xxxx/xxxx)
+# target_link_libraries(exe "libname")
+# 这里的 "libname" 就是 libxxxx.so 里的 "xxxx"
+# 用 find_package 只不过可移植性高一些，比如下面的 boost，你就不用去管
+# Boost_INCLUDE_DIRS 在不同平台下都是什么
+#
+# 其实还有一个添加 lib 的方法，就是直接通过 CMAKE_CXX_FLAGS 指定，但还是
+# 不要这样了，不好看
+# ------------------------------------------------------------
+
 # find_package 用于设置你程序需要的 lib
 # find_package 会被 cmake 转换为相应的脚本调用，脚本在 /usr/share/cmake/Modules
 # 下面的 find_package 会调用 /usr/share/cmake/Modules/FindBoost.cmake
@@ -32,10 +49,6 @@ include_directories(src ${Boost_INCLUDE_DIRS})
 
 # message 可以方便用于 cmake 调试
 message("Boost_INCLUDE_DIRS: ${Boost_INCLUDE_DIRS}")
-
-# ======================================================================
-# building executables
-# ======================================================================
 
 # add_executable 就是用于生成可执行文件的，一个可执行文件对应一个 add_executable
 # 从第二个参数，开始列出所有这个文件依赖的 cpp 文件（据说比较建议的做法是显式得
