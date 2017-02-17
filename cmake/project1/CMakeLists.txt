@@ -11,7 +11,7 @@ cmake_minimum_required(VERSION 2.8.11)
 # CMAKE_BUILD_TYPE 用于设置 build 类型，可以设置为 Release 或者 Debug
 # 设置了 Release 就会读取 CMAKE_CXX_FLAGS_RELEASE 变量
 # 设置了 Debug 就会读取 CMAKE_CXX_FLAGS_DEBUG 变量
-set(CMAKE_BUILD_TYPE Release)
+# set(CMAKE_BUILD_TYPE Release)
 # set(CMAKE_BUILD_TYPE Debug)
 set(CMAKE_CXX_FLAGS_DEBUG "-g -Wall -std=c++11")
 set(CMAKE_CXX_FLAGS_RELEASE "-O2 -std=c++11")
@@ -77,6 +77,12 @@ if (ENABLE_Test)
     enable_testing()
     add_test(some-description test_boost_filesystem)
 endif()
+
+# ======================================================================
+# install
+# ======================================================================
+
+install(TARGETS cmakedemo DESTINATION ${CMAKE_INSTALL_PREFIX}/bin/)
 
 # ======================================================================
 # cmake 还有一个很常用的函数是 add_subdirectory
