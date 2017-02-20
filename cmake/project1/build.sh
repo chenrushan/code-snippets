@@ -42,5 +42,5 @@ dir=$(pwd)
 echo "project dir: ${dir}"
 cd .build/${build_type}
 cmake -D CMAKE_INSTALL_PREFIX=${dir} -D CMAKE_BUILD_TYPE=${build_type} ${dir}
-make install
+make -j install
 
