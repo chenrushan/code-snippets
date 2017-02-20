@@ -53,6 +53,13 @@ message("Boost_INCLUDE_DIRS: ${Boost_INCLUDE_DIRS}")
 # add_executable 就是用于生成可执行文件的，一个可执行文件对应一个 add_executable
 # 从第二个参数，开始列出所有这个文件依赖的 cpp 文件（据说比较建议的做法是显式得
 # 把所有依赖的文件列出来，而不是用类似 glob 的方法）
+# 如果你觉得有必要用 glob 的话，可以这样
+#
+# file(GLOB SOURCES src/*.cpp src/lib1/*.cpp)
+# add_executable(cmakedemo ${SOURCES})
+# 如果需要递归遍历 src，可以 
+# file(GLOB_RECURSE SOURCES src/*.cpp)
+# 这样会获取 src 和 src 下的所有的子目录的 .cpp 文件
 add_executable(cmakedemo
     src/main.cpp
     src/lib1/boost_filesystem.cpp)
