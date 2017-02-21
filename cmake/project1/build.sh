@@ -17,6 +17,11 @@ if [[ "$build_type" == "d" ]] || [[ "$build_type" == "debug" ]]; then
     build_type=Debug
 fi
 
+if [[ "$build_type" != "Release" ]] && [[ "$build_type" != "Debug" ]]; then
+    echo "build_type should be [r|d|release|debug], but you specify $build_type"
+    exit 1
+fi
+
 echo "BUILD_TYPE: ${build_type}"
 
 # ======================================================================
